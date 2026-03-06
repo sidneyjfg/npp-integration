@@ -1,40 +1,27 @@
-import fs from "fs";
-import path from "path";
+import axios from "axios";
+import { NappClient } from "../export/napp.client";
 
 export class StatusService {
 
-  getLastExecution() {
+  async getFiles() {
 
-    const logDir = path.join(process.cwd(), "logs");
+    const napp = new NappClient(process.env.NAPP_BASE_URL!);
 
-    if (!fs.existsSync(logDir)) {
-      return {
-        sent: false,
-        message: "Nenhum log encontrado"
-      };
-    }
+    const token = await napp.authenticate(
+      process.env.NAPP_USERNAME!,
+      process.env.NAPP_PASSWORD!
+    );
 
-    const files = fs.readdirSync(logDir);
+    const { data } = await axios.get(
+      `${process.env.NAPP_BASE_URL}/api/files/list`,
+      {
+        headers: {
+          Authorization: token
+        }
+      }
+    );
 
-    if (files.length === 0) {
-      return {
-        sent: false,
-        message: "Nenhum log encontrado"
-      };
-    }
-
-    const latestFile = files.sort().reverse()[0];
-
-    const content = fs.readFileSync(path.join(logDir, latestFile), "utf8");
-
-    const lines = content.trim().split("\n");
-
-    const lastLine = lines[lines.length - 1];
-
-    return {
-      sent: lastLine.includes("Upload concluído"),
-      lastLog: lastLine
-    };
+    return data;
   }
 
 }

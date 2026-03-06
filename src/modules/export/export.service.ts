@@ -66,7 +66,7 @@ export class ExportService {
             process.env.NAPP_USERNAME!,
             process.env.NAPP_PASSWORD!
         );
-
+        console.log(`Token de autenticação obtido, ${token}`);
         const signedUrl = await napp.getSignedUploadUrl(
             token,
             process.env.NAPP_FILE_TYPE ?? "vendas",

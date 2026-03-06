@@ -7,9 +7,24 @@ export class StatusController {
 
   status = async (req: Request, res: Response) => {
 
-    const result = this.service.getLastExecution();
+    try {
 
-    res.json(result);
+      const files = await this.service.getFiles();
+
+      res.json({
+        ok: true,
+        files
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        ok: false,
+        error: "Erro ao consultar arquivos NAPP",
+        details: err
+      });
+
+    }
 
   }
 

@@ -13,7 +13,7 @@ async function main() {
   app.use(express.json());
   const controller = new ExportController();
   const statusController = new StatusController();
-  
+
   app.get("/export/vendas", controller.export);
   app.get("/status", statusController.status);
   startDailyExportJob();
