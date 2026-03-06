@@ -1,24 +1,40 @@
 import cron from "node-cron";
 import { ExportService } from "../modules/export/export.service";
-import dotenv from "dotenv";
 
-dotenv.config();
 export function startDailyExportJob() {
-  const CRON = process.env.CRON || "0 2 * * *"; // padrão: todo dia às 02:00
+
+  const CRON = process.env.CRON || "0 2 * * *";
   const service = new ExportService();
 
-  // todo dia às 02:00
-  cron.schedule(CRON, async () => {
-    console.log("Iniciando exportação NAPP...");
+  console.log(`Cron registrada: ${CRON}`);
 
-    try {
+  if (!cron.validate(CRON)) {
+    console.error("Expressão CRON inválida:", CRON);
+    return;
+  }
 
-      await service.exportSalesAndSend();
+  cron.schedule(
+    CRON,
+    async () => {
 
-      console.log("Exportação finalizada");
+      console.log(`Executando cron NAPP (${CRON})`);
 
-    } catch (err) {
-      console.error("Erro no job:", err);
+      try {
+
+        await service.exportSalesAndSend();
+
+        console.log("Exportação finalizada");
+
+      } catch (err) {
+
+        console.error("Erro no job:", err);
+
+      }
+
+    },
+    {
+      timezone: "America/Sao_Paulo"
     }
-  });
+  );
+
 }
