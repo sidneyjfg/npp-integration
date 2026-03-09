@@ -45,9 +45,11 @@ LEFT JOIN
 WHERE
         inv.issue_date = CURDATE() - INTERVAL 1 DAY AND
         inv.type IN (2,3,5,10) AND
-        inv.storeno = 5
+        inv.storeno = 5 AND
+        inv.cfo IN (1202,2202)
 
-ORDER BY  Data
+ORDER BY
+        Data
     `);
 
         const fields = [
