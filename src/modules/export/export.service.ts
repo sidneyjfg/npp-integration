@@ -8,37 +8,46 @@ export class ExportService {
 
         const sales = await AppDataSource.query(`
       SELECT  
-        nf.xano AS id_venda,
-        nf.nfno AS numero_nota,
-        CONCAT(DATE_FORMAT(nf.issuedate,"%Y-%m-%d")," ",IFNULL(SEC_TO_TIME(pxa.time),"12:00:00")) AS data_hora_venda,
-        TRUNCATE(nf.grossamt/100,2) AS valor_liquido,
+        nf.xano                                                                                   AS Id_Venda,
+        nf.nfno                                                                                   AS Nota_Fiscal,
+        CONCAT(DATE_FORMAT(nf.issuedate,"%Y-%m-%d")," ",IFNULL(SEC_TO_TIME(pxa.time),"12:00:00")) AS Data,
+        TRUNCATE(nf.grossamt/100,2)                                                               AS Valor_Liquido,
         CASE
           WHEN nf.status = 0 THEN "Vendido"
           WHEN nf.status = 1 THEN "Cancelado"
-        END AS status
-      FROM sqldados.nf
-      LEFT JOIN sqlpdv.pxa USING (storeno, pdvno, xano)
-      WHERE nf.issuedate = CURDATE() - INTERVAL 1 DAY
-      AND nf.storeno = 5
 
-      UNION
+        END                                                                                       AS Situacao
+FROM 
+        sqldados.nf
+LEFT JOIN
+        sqlpdv.pxa USING (storeno, pdvno, xano)
 
-      SELECT
-        inv.invno AS id_venda,
-        inv.nfname AS numero_nota,
-        CONCAT(DATE_FORMAT(inv.issue_date,"%Y-%m-%d")," ",IFNULL(SUBSTRING(dataHoraStrEnvio,12,8),"12:00:00")) AS data_hora_venda,
-        TRUNCATE(inv.grossamt/100,2) AS valor_liquido,
+WHERE
+        nf.issuedate = CURDATE() - INTERVAL 1 DAY AND
+        nf.storeno = 5 AND
+        nf.cfo IN (5102, 6102)
+
+UNION
+SELECT
+        inv.invno                                                                                               AS Id_Venda,
+        inv.nfname                                                                                              AS Nota_Fiscal,
+        CONCAT(DATE_FORMAT(inv.issue_date,"%Y-%m-%d")," ",IFNULL(SUBSTRING(dataHoraStrEnvio,12,8),"12:00:00"))  AS Data,
+        TRUNCATE(inv.grossamt/100,2)*-1                                                                            AS Valor_Liquido,
         CASE 
           WHEN inv.type IN (2,5,10) THEN "Devolucao"
           WHEN inv.type = 3 THEN "Troca"
-        END AS status
-      FROM sqldados.inv 
-      LEFT JOIN sqldados.invnfe USING (invno)
-      WHERE inv.issue_date = CURDATE() - INTERVAL 1 DAY
-      AND inv.type IN (2,3,5,10)
-      AND inv.storeno = 5
 
-      ORDER BY data_hora_venda
+        END                                                                                                     AS Situacao
+FROM
+        sqldados.inv 
+LEFT JOIN
+        sqldados.invnfe USING (invno)
+WHERE
+        inv.issue_date = CURDATE() - INTERVAL 1 DAY AND
+        inv.type IN (2,3,5,10) AND
+        inv.storeno = 5
+
+ORDER BY  Data
     `);
 
         const fields = [
