@@ -32,7 +32,7 @@ SELECT
         inv.invno                                                                                               AS Id_Venda,
         inv.nfname                                                                                              AS Nota_Fiscal,
         CONCAT(DATE_FORMAT(inv.issue_date,"%Y-%m-%d")," ",IFNULL(SUBSTRING(dataHoraStrEnvio,12,8),"12:00:00"))  AS Data,
-        TRUNCATE(inv.grossamt/100,2)*-1                                                                            AS Valor_Liquido,
+        TRUNCATE(inv.grossamt/100,2)*-1                                                                         AS Valor_Liquido,
         CASE 
           WHEN inv.type IN (2,5,10) THEN "Devolucao"
           WHEN inv.type = 3 THEN "Troca"
