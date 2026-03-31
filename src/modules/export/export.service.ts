@@ -2,6 +2,8 @@ import { AppDataSource } from "../../data-source";
 import { Parser as Json2CsvParser } from "json2csv";
 import dayjs from "dayjs";
 import { NappClient } from "./napp.client";
+import fs from "fs";
+import path from "path";
 
 export class ExportService {
     async exportSalesAndSend(): Promise<{ fileName: string; rows: number }> {
@@ -67,10 +69,27 @@ ORDER BY
         });
 
         const csv = parser.parse(sales);
+        console.log(`📊 Total de linhas: ${sales.length}`);
+
+        if (sales.length === 0) {
+            console.warn("⚠️ Nenhum dado retornado pela query!");
+        } else {
+            console.log("📄 Preview do CSV (primeiras linhas):");
+            console.log(csv.split("\n").slice(0, 5).join("\n"));
+        }
         const fileBytes = Buffer.from(csv, "utf8");
 
         const fileName = `vendas_${dayjs().format("YYYYMMDD")}.csv`;
+        const logsDir = path.resolve(process.cwd(), "logs");
 
+        if (!fs.existsSync(logsDir)) {
+            fs.mkdirSync(logsDir, { recursive: true });
+        }
+
+        const logFilePath = path.join(logsDir, fileName);
+        fs.writeFileSync(logFilePath, csv, "utf8");
+
+        console.log(`💾 CSV salvo em log: ${logFilePath}`);
         const napp = new NappClient(process.env.NAPP_BASE_URL!);
 
         const token = await napp.authenticate(
@@ -85,6 +104,8 @@ ORDER BY
         );
 
         await napp.uploadToSignedUrl(signedUrl, fileBytes, fileName);
+        console.log(`🚀 Upload concluído! Arquivo: ${fileName}`);
+        console.log(`📦 Tamanho do arquivo: ${fileBytes.length} bytes`);
         return {
             fileName,
             rows: sales.length
