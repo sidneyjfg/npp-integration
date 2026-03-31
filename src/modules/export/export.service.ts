@@ -55,11 +55,11 @@ ORDER BY
     `);
 
         const fields = [
-            "id_venda",
-            "numero_nota",
-            "data_hora_venda",
-            "valor_liquido",
-            "status"
+            "Id_Venda",
+            "Nota_Fiscal",
+            "Data",
+            "Valor_Liquido",
+            "Situacao"
         ];
 
         const parser = new Json2CsvParser({
@@ -90,22 +90,33 @@ ORDER BY
         fs.writeFileSync(logFilePath, csv, "utf8");
 
         console.log(`💾 CSV salvo em log: ${logFilePath}`);
-        const napp = new NappClient(process.env.NAPP_BASE_URL!);
+        const shouldSend = process.env.SEND_TO_NAPP !== "false";
 
-        const token = await napp.authenticate(
-            process.env.NAPP_USERNAME!,
-            process.env.NAPP_PASSWORD!
-        );
-        console.log(`Token de autenticação obtido, ${token}`);
-        const signedUrl = await napp.getSignedUploadUrl(
-            token,
-            process.env.NAPP_FILE_TYPE ?? "vendas",
-            fileName
-        );
+        if (!shouldSend) {
+            console.log("🧪 MODO DEBUG: envio para Napp DESATIVADO");
+            console.log(`📄 Arquivo gerado: ${fileName}`);
+            console.log(`📦 Tamanho: ${fileBytes.length} bytes`);
+        } else {
+            const napp = new NappClient(process.env.NAPP_BASE_URL!);
 
-        await napp.uploadToSignedUrl(signedUrl, fileBytes, fileName);
-        console.log(`🚀 Upload concluído! Arquivo: ${fileName}`);
-        console.log(`📦 Tamanho do arquivo: ${fileBytes.length} bytes`);
+            const token = await napp.authenticate(
+                process.env.NAPP_USERNAME!,
+                process.env.NAPP_PASSWORD!
+            );
+
+            console.log(`🔐 Token obtido`);
+
+            const signedUrl = await napp.getSignedUploadUrl(
+                token,
+                process.env.NAPP_FILE_TYPE ?? "vendas",
+                fileName
+            );
+
+            await napp.uploadToSignedUrl(signedUrl, fileBytes, fileName);
+
+            console.log(`🚀 Upload concluído! Arquivo: ${fileName}`);
+            console.log(`📦 Tamanho do arquivo: ${fileBytes.length} bytes`);
+        }
         return {
             fileName,
             rows: sales.length
